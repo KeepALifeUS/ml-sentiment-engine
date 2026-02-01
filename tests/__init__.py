@@ -1,1 +1,1 @@
-"""Tests package для ML-Framework ML Sentiment Engine."""
+"""Tests package for ML-Framework ML Sentiment Engine."""

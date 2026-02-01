@@ -1,5 +1,5 @@
 """
-Data validation utilities для ML-Framework ML Sentiment Engine
+Data validation utilities for ML-Framework ML Sentiment Engine
 
 Enterprise-grade валидация с Context7 patterns и типизированными проверками.
 """

@@ -1,5 +1,5 @@
 """
-Structured logging для ML-Framework ML Sentiment Engine
+Structured logging for ML-Framework ML Sentiment Engine
 
 Enterprise-grade logging с OpenTelemetry integration и Context7 patterns.
 """

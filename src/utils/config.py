@@ -1,5 +1,5 @@
 """
-Configuration management для ML-Framework ML Sentiment Engine
+Configuration management for ML-Framework ML Sentiment Engine
 
 Enterprise-grade configuration с validation, environment support и Context7 patterns.
 """

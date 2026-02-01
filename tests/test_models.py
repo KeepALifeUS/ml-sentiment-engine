@@ -14,7 +14,7 @@ class TestVADERSentiment:
     
     @pytest.fixture
     def vader_analyzer(self):
-        """Fixture для VADER analyzer"""
+        """Fixture for VADER analyzer"""
         return VADERSentimentAnalyzer()
     
     @pytest.mark.asyncio
@@ -79,7 +79,7 @@ class TestEnsembleModel:
     
     @pytest.fixture
     async def ensemble_model(self):
-        """Fixture для ensemble model"""
+        """Fixture for ensemble model"""
         model = EnsembleSentimentModel()
         await model.initialize()
         return model

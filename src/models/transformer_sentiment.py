@@ -72,7 +72,7 @@ class TransformerModelManager:
     
     async def load_model(self, model_key: str) -> Tuple[Any, Any]:
         """
-        Загрузка модели и tokenizer
+        Load model and tokenizer
         
         Args:
             model_key: Ключ модели из конфигурации
