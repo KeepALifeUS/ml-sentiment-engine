@@ -77,7 +77,7 @@ class SentimentTaskScheduler:
 
  def __init__(self, max_concurrent_tasks: Optional[int] = None):
  """
- Scheduler initialization
+ Initialize the scheduler
 
  Args:
  max_concurrent_tasks: Maximum number of concurrent tasks
@@ -94,7 +94,7 @@ class SentimentTaskScheduler:
  self._executor_task: Optional[asyncio.Task] = None
  self._lock = asyncio.Lock
 
- # Metrics
+ # Record metrics
  self.total_tasks = 0
  self.successful_tasks = 0
  self.failed_tasks = 0
@@ -418,7 +418,7 @@ class SentimentTaskScheduler:
  error=str(e)
  )
  else:
- # Number of attempts exceeded
+ # Retry limit exceeded
  task.status = TaskStatus.FAILED
  task.completed_at = datetime.utcnow
  self.failed_tasks += 1

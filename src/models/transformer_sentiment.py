@@ -27,10 +27,10 @@ logger = get_logger(__name__)
 
 
 class TransformerModelManager:
- """Manager for management transformer models"""
+ """Manager for transformer models"""
 
  def __init__(self):
- """Initialization manager models"""
+ """Initialize the model manager"""
  config = get_config
 
  self.device = torch.device("cuda" if torch.cuda.is_available and config.ml.use_gpu else "cpu")
@@ -38,7 +38,7 @@ class TransformerModelManager:
  self.tokenizers_cache = {}
  self.pipelines_cache = {}
 
- # Configuration models
+ # Model configuration
  self.model_configs = {
  "finbert": {
  "model_name": "ProsusAI/finbert",
@@ -72,10 +72,10 @@ class TransformerModelManager:
 
  async def load_model(self, model_key: str) -> Tuple[Any, Any]:
  """
- Load model and tokenizer
+ Load a model and its tokenizer
 
  Args:
- model_key: Key model from configuration
+ model_key: Model key from configuration
 
  Returns:
  Tuple[Any, Any]: (model, tokenizer)
@@ -93,7 +93,7 @@ class TransformerModelManager:
  try:
  start_time = time.time
 
- # Loading in separately executor for blocking operations
+ # Load in a separate executor for blocking operations
  loop = asyncio.get_event_loop
 
  tokenizer = await loop.run_in_executor(
@@ -106,11 +106,11 @@ class TransformerModelManager:
  lambda: AutoModelForSequenceClassification.from_pretrained(model_name)
  )
 
- # Transfer on device
+ # Transfer to device
  model = model.to(self.device)
- model.eval # Mode inference
+ model.eval # Inference mode
 
- # Caching
+ # Cache the model
  self.models_cache[model_key] = model
  self.tokenizers_cache[model_key] = tokenizer
  self.model_loads += 1
@@ -132,10 +132,10 @@ class TransformerModelManager:
 
  async def load_pipeline(self, model_key: str) -> Any:
  """
- Loading pipeline for model
+ Load a pipeline for the model
 
  Args:
- model_key: Key model
+ model_key: Model key
 
  Returns:
  Any: HuggingFace pipeline
@@ -179,7 +179,7 @@ class TransformerModelManager:
  raise
 
  def get_stats(self) -> Dict[str, Any]:
- """Getting statistics manager models"""
+ """Get model manager statistics"""
  return {
  "device": str(self.device),
  "models_loaded": len(self.models_cache),
@@ -201,17 +201,17 @@ class FinBERTSentimentAnalyzer:
 
  def __init__(self, model_manager: TransformerModelManager):
  """
- Initialization FinBERT analyzer
+ Initialize the FinBERT analyzer
 
  Args:
- model_manager: Manager models
+ model_manager: Model manager
  """
  self.model_manager = model_manager
  self.model_key = "finbert"
  self.model = None
  self.tokenizer = None
 
- # Mapping labels on numeric values
+ # Map labels to numeric values
  self.label_mapping = {
  "negative": -1.0,
  "neutral": 0.0,
@@ -219,19 +219,19 @@ class FinBERTSentimentAnalyzer:
  }
 
  async def initialize(self):
- """Initialization model"""
+ """Initialize the model"""
  self.model, self.tokenizer = await self.model_manager.load_model(self.model_key)
  logger.info("FinBERT sentiment analyzer initialized")
 
  async def predict(self, text: str) -> SentimentScore:
  """
- Prediction sentiment for text
+ Predict sentiment for text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- SentimentScore: Result analysis
+ SentimentScore: Analysis result
  """
  if not self.model or not self.tokenizer:
  await self.initialize
@@ -239,12 +239,12 @@ class FinBERTSentimentAnalyzer:
  try:
  start_time = time.time
 
- # Preprocessing text
+ # Preprocess text
  cleaned_text = sanitize_text(text)
  if not validate_text_content(cleaned_text, "transformer"):
  raise ValueError("Invalid text content")
 
- # Tokenization
+ # Tokenize
  inputs = self.tokenizer(
  cleaned_text,
  return_tensors="pt",
@@ -253,7 +253,7 @@ class FinBERTSentimentAnalyzer:
  max_length=512
  )
 
- # Transfer on device
+ # Transfer to device
  inputs = {k: v.to(self.model_manager.device) for k, v in inputs.items}
 
  # Inference
@@ -261,18 +261,18 @@ class FinBERTSentimentAnalyzer:
  outputs = self.model(**inputs)
  predictions = F.softmax(outputs.logits, dim=-1)
 
- # Getting probability
+ # Get probabilities
  probs = predictions.cpu.numpy[0]
 
- # Search most probable class
+ # Find the most probable class
  predicted_class_id = np.argmax(probs)
  predicted_label = self.model_manager.model_configs[self.model_key]["labels"][predicted_class_id]
 
- # Conversion in sentiment score
+ # Convert to sentiment score
  sentiment_value = self.label_mapping[predicted_label]
  confidence = float(probs[predicted_class_id])
 
- # Metrics
+ # Record metrics
  inference_time = time.time - start_time
  self.model_manager.predictions_made += 1
  self.model_manager.total_inference_time += inference_time
@@ -297,40 +297,40 @@ class FinBERTSentimentAnalyzer:
 
  async def predict_batch(self, texts: List[str], batch_size: int = 8) -> List[SentimentScore]:
  """
- Batch prediction for list texts
+ Batch prediction for a list of texts
 
  Args:
- texts: List texts for analysis
+ texts: List of texts for analysis
  batch_size: Batch size
 
  Returns:
- List[SentimentScore]: Results analysis
+ List[SentimentScore]: Analysis results
  """
  if not self.model or not self.tokenizer:
  await self.initialize
 
  results = []
 
- # Processing batches
+ # Process batches
  for i in range(0, len(texts), batch_size):
  batch_texts = texts[i:i + batch_size]
 
  try:
  start_time = time.time
 
- # Preprocessing
+ # Preprocess
  cleaned_texts = [sanitize_text(text) for text in batch_texts]
  valid_texts = [text for text in cleaned_texts if text and len(text) > 0]
 
  if not valid_texts:
- # Adding empty results for invalid texts
+ # Add empty results for invalid texts
  results.extend([
  SentimentScore(value=0.0, confidence=0.0, model_name="finbert")
  for _ in batch_texts
  ])
  continue
 
- # Tokenization batch
+ # Tokenize batch
  inputs = self.tokenizer(
  valid_texts,
  return_tensors="pt",
@@ -339,17 +339,17 @@ class FinBERTSentimentAnalyzer:
  max_length=512
  )
 
- # Transfer on device
+ # Transfer to device
  inputs = {k: v.to(self.model_manager.device) for k, v in inputs.items}
 
- # Batch inference
+ # Run batch inference
  with torch.no_grad:
  outputs = self.model(**inputs)
  predictions = F.softmax(outputs.logits, dim=-1)
 
  probs = predictions.cpu.numpy
 
- # Processing results
+ # Process results
  batch_results = []
  for j, prob in enumerate(probs):
  predicted_class_id = np.argmax(prob)
@@ -366,7 +366,7 @@ class FinBERTSentimentAnalyzer:
 
  results.extend(batch_results)
 
- # Metrics
+ # Record metrics
  inference_time = time.time - start_time
  self.model_manager.predictions_made += len(batch_texts)
  self.model_manager.total_inference_time += inference_time
@@ -379,7 +379,7 @@ class FinBERTSentimentAnalyzer:
 
  except Exception as e:
  logger.error("FinBERT batch prediction failed", error=e)
- # Adding zero results for unsuccessful batch
+ # Add zero results for the failed batch
  results.extend([
  SentimentScore(value=0.0, confidence=0.0, model_name="finbert")
  for _ in batch_texts
@@ -394,25 +394,25 @@ class TwitterRoBERTaSentimentAnalyzer:
  """
 
  def __init__(self, model_manager: TransformerModelManager):
- """Initialization Twitter RoBERTa analyzer"""
+ """Initialize the Twitter RoBERTa analyzer"""
  self.model_manager = model_manager
  self.model_key = "cardiffnlp_twitter"
  self.pipeline = None
 
  async def initialize(self):
- """Initialization pipeline"""
+ """Initialize the pipeline"""
  self.pipeline = await self.model_manager.load_pipeline(self.model_key)
  logger.info("Twitter RoBERTa sentiment analyzer initialized")
 
  async def predict(self, text: str) -> SentimentScore:
  """
- Prediction sentiment for social media text
+ Predict sentiment for social media text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- SentimentScore: Result analysis
+ SentimentScore: Analysis result
  """
  if not self.pipeline:
  await self.initialize
@@ -420,24 +420,24 @@ class TwitterRoBERTaSentimentAnalyzer:
  try:
  start_time = time.time
 
- # Preprocessing for social media
+ # Preprocess for social media
  cleaned_text = self._preprocess_social_text(text)
 
  if not validate_text_content(cleaned_text, "twitter"):
  raise ValueError("Invalid social media text content")
 
- # Inference through pipeline
+ # Run inference through the pipeline
  loop = asyncio.get_event_loop
  result = await loop.run_in_executor(
  None,
  lambda: self.pipeline(cleaned_text)
  )
 
- # Processing result
+ # Process the result
  label = result["label"].lower
  confidence = result["score"]
 
- # Mapping labels
+ # Map labels
  label_mapping = {
  "negative": -1.0,
  "neutral": 0.0,
@@ -446,7 +446,7 @@ class TwitterRoBERTaSentimentAnalyzer:
 
  sentiment_value = label_mapping.get(label, 0.0)
 
- # Metrics
+ # Record metrics
  inference_time = time.time - start_time
  self.model_manager.predictions_made += 1
  self.model_manager.total_inference_time += inference_time
@@ -470,7 +470,7 @@ class TwitterRoBERTaSentimentAnalyzer:
 
  def _preprocess_social_text(self, text: str) -> str:
  """
- Preprocessing text for social media
+ Preprocess text for social media
 
  Args:
  text: Original text
@@ -478,18 +478,18 @@ class TwitterRoBERTaSentimentAnalyzer:
  Returns:
  str: Processed text
  """
- # Base cleanup
+ # Basic cleanup
  cleaned = sanitize_text(text)
 
  # Social media specific handling
- # Normalization URLs
+ # Normalize URLs
  cleaned = re.sub(r'http[s]?://[^\s]+', '[URL]', cleaned)
 
- # Normalization mentions
+ # Normalize mentions
  cleaned = re.sub(r'@\w+', '[USER]', cleaned)
 
- # Saving emoji (important for sentiment)
- # Normalization recurring symbols
+ # Preserve emoji (important for sentiment)
+ # Normalize recurring characters
  cleaned = re.sub(r'(.)\1{2,}', r'\1\1', cleaned)
 
  return cleaned
@@ -501,19 +501,19 @@ class TransformerSentimentEnsemble:
  """
 
  def __init__(self):
- """Initialization ensemble"""
+ """Initialize the ensemble"""
  self.model_manager = TransformerModelManager
  self.finbert_analyzer = FinBERTSentimentAnalyzer(self.model_manager)
  self.twitter_analyzer = TwitterRoBERTaSentimentAnalyzer(self.model_manager)
 
- # Weights for ensemble (can configure)
+ # Ensemble weights (configurable)
  self.weights = {
  "finbert": 0.6, # Large weight for financial texts
  "twitter_roberta": 0.4 # Smaller weight for social media
  }
 
  async def initialize(self):
- """Initialization all analyzers"""
+ """Initialize all analyzers"""
  await self.finbert_analyzer.initialize
  await self.twitter_analyzer.initialize
  logger.info("Transformer sentiment ensemble initialized")
@@ -525,12 +525,12 @@ class TransformerSentimentEnsemble:
  use_weighted_ensemble: bool = True
  ) -> SentimentScore:
  """
- Ensemble prediction with adaptive weightsand
+ Ensemble prediction with adaptive weights
 
  Args:
- text: Text for analysis
- source: Text source for adaptation weights
- use_weighted_ensemble: Use whether weighted averaging
+ text: Text to analyze
+ source: Text source for weight adaptation
+ use_weighted_ensemble: Whether to use weighted averaging
 
  Returns:
  SentimentScore: Ensemble analysis result
@@ -547,10 +547,10 @@ class TransformerSentimentEnsemble:
  avg_sentiment = (finbert_result.value + twitter_result.value) / 2
  avg_confidence = (finbert_result.confidence + twitter_result.confidence) / 2
  else:
- # Adaptive weights in depending from source
+ # Adapt weights based on source
  weights = self._adapt_weights_for_source(source)
 
- # Weighted averaging
+ # Weighted average
  avg_sentiment = (
  finbert_result.value * weights["finbert"] +
  twitter_result.value * weights["twitter_roberta"]
@@ -585,32 +585,32 @@ class TransformerSentimentEnsemble:
 
  def _adapt_weights_for_source(self, source: str) -> Dict[str, float]:
  """
- Adaptation weights in depending from source data
+ Adapt weights based on the data source
 
  Args:
- source: Source data
+ source: Data source
 
  Returns:
  Dict[str, float]: Adapted weights
  """
  if source in ["twitter", "reddit", "telegram", "discord"]:
- # Large weight social media model
+ # Higher weight for social media model
  return {
  "finbert": 0.3,
  "twitter_roberta": 0.7
  }
  elif source in ["news", "bloomberg", "reuters"]:
- # Large weight financial model
+ # Higher weight for financial model
  return {
  "finbert": 0.8,
  "twitter_roberta": 0.2
  }
  else:
- # Base weights
+ # Default weights
  return self.weights
 
  def get_stats(self) -> Dict[str, Any]:
- """Getting statistics ensemble"""
+ """Get ensemble statistics"""
  base_stats = self.model_manager.get_stats
  base_stats["ensemble_weights"] = self.weights
  base_stats["model_type"] = "transformer_ensemble"
@@ -620,10 +620,10 @@ class TransformerSentimentEnsemble:
 # Factory functions
 async def create_finbert_analyzer -> FinBERTSentimentAnalyzer:
  """
- Factory for creation FinBERT analyzer
+ Factory function for creating a FinBERT analyzer
 
  Returns:
- FinBERTSentimentAnalyzer: initialized analyzer
+ FinBERTSentimentAnalyzer: Initialized analyzer
  """
  manager = TransformerModelManager
  analyzer = FinBERTSentimentAnalyzer(manager)
@@ -633,10 +633,10 @@ async def create_finbert_analyzer -> FinBERTSentimentAnalyzer:
 
 async def create_twitter_analyzer -> TwitterRoBERTaSentimentAnalyzer:
  """
- Factory for creation Twitter analyzer
+ Factory function for creating a Twitter analyzer
 
  Returns:
- TwitterRoBERTaSentimentAnalyzer: initialized analyzer
+ TwitterRoBERTaSentimentAnalyzer: Initialized analyzer
  """
  manager = TransformerModelManager
  analyzer = TwitterRoBERTaSentimentAnalyzer(manager)
@@ -646,10 +646,10 @@ async def create_twitter_analyzer -> TwitterRoBERTaSentimentAnalyzer:
 
 async def create_transformer_ensemble -> TransformerSentimentEnsemble:
  """
- Factory for creation transformer ensemble
+ Factory function for creating a transformer ensemble
 
  Returns:
- TransformerSentimentEnsemble: initialized ensemble
+ TransformerSentimentEnsemble: Initialized ensemble
  """
  ensemble = TransformerSentimentEnsemble
  await ensemble.initialize

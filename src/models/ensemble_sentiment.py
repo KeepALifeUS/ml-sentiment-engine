@@ -31,7 +31,7 @@ class EnsembleSentimentModel:
  """
 
  def __init__(self):
- """Initialize ensemble model"""
+ """Initialize the ensemble model"""
  config = get_config
 
  # Constituent models
@@ -84,7 +84,7 @@ class EnsembleSentimentModel:
  Ensemble prediction with adaptive weighting
 
  Args:
- text: Text for analysis
+ text: Text to analyze
  source: Data source for adaptation
  use_adaptive_weighting: Use adaptive weights
 
@@ -103,18 +103,18 @@ class EnsembleSentimentModel:
  # Get predictions from all models
  model_results = await self._get_model_predictions(text, source)
 
- # Selection ensemble strategy
+ # Select ensemble strategy
  if use_adaptive_weighting:
  ensemble_result = self._adaptive_ensemble(model_results, source)
  else:
  ensemble_result = self._weighted_ensemble(model_results, source)
 
- # Metrics
+ # Record metrics
  inference_time = time.time - start_time
  self.predictions_made += 1
  self.total_inference_time += inference_time
 
- # Logging result
+ # Log the result
  logger.debug(
  "Ensemble prediction completed",
  source=source,
@@ -140,8 +140,8 @@ class EnsembleSentimentModel:
  Get predictions from all models with error handling
 
  Args:
- text: Text for analysis
- source: Source data
+ text: Text to analyze
+ source: Data source
 
  Returns:
  Dict[str, SentimentScore]: Results from each model
@@ -153,7 +153,7 @@ class EnsembleSentimentModel:
  transformer_result = await self.transformer_ensemble.predict(text, source)
  results["transformer"] = transformer_result
 
- # Updating performance history
+ # Update performance history
  self.performance_history["transformer"].append(transformer_result.confidence)
  if len(self.performance_history["transformer"]) > 100:
  self.performance_history["transformer"].pop(0)
@@ -170,7 +170,7 @@ class EnsembleSentimentModel:
  vader_result = await self.vader_analyzer.predict(text)
  results["vader"] = vader_result
 
- # Updating performance history
+ # Update performance history
  self.performance_history["vader"].append(vader_result.confidence)
  if len(self.performance_history["vader"]) > 100:
  self.performance_history["vader"].pop(0)
@@ -194,15 +194,15 @@ class EnsembleSentimentModel:
 
  Args:
  model_results: Results from models
- source: Source data
+ source: Data source
 
  Returns:
  SentimentScore: Adaptive ensemble result
  """
- # Base weights for source
+ # Default weights for the source
  base_weights = self._get_source_weights(source)
 
- # Weight adaptation based on confidence
+ # Adapt weights based on confidence
  adaptive_weights = {}
  total_confidence = 0
 
@@ -220,7 +220,7 @@ class EnsembleSentimentModel:
  else:
  adaptive_weights[model_name] = 0
 
- # Weight normalization
+ # Normalize weights
  if sum(adaptive_weights.values) > 0:
  total_weight = sum(adaptive_weights.values)
  adaptive_weights = {k: v / total_weight for k, v in adaptive_weights.items}
@@ -228,7 +228,7 @@ class EnsembleSentimentModel:
  # Fallback to equal weights if all confidence is low
  adaptive_weights = {k: 1.0 / len(model_results) for k in model_results.keys}
 
- # Computing ensemble sentiment
+ # Compute ensemble sentiment
  ensemble_sentiment = sum(
  result.value * adaptive_weights[model_name]
  for model_name, result in model_results.items
@@ -256,7 +256,7 @@ class EnsembleSentimentModel:
 
  Args:
  model_results: Results from models
- source: Source data
+ source: Data source
 
  Returns:
  SentimentScore: Weighted ensemble result
@@ -283,10 +283,10 @@ class EnsembleSentimentModel:
 
  def _get_source_weights(self, source: str) -> Dict[str, float]:
  """
- Getting weights depending on source
+ Get weights based on source
 
  Args:
- source: Source data
+ source: Data source
 
  Returns:
  Dict[str, float]: Weights for each model
@@ -308,11 +308,11 @@ class EnsembleSentimentModel:
  "crypto_specific": 0.2
  }
  else:
- # Base weights
+ # Default weights
  return self.base_weights
 
  def _map_model_name(self, model_name: str) -> str:
- """Mapping names models"""
+ """Map model names"""
  mapping = {
  "transformer": "finbert",
  "vader": "vader"
@@ -336,36 +336,36 @@ class EnsembleSentimentModel:
  if not history:
  return 1.0
 
- # Average confidence beyond last predictions
+ # Average confidence over recent predictions
  avg_confidence = np.mean(history)
 
- # Conversion in performance factor
+ # Convert to performance factor
  # High confidence -> high factor
  return 0.5 + avg_confidence
 
  async def predict_batch(self, texts: List[str], source: str = "unknown") -> List[SentimentScore]:
  """
- Batch prediction for ensemble
+ Batch prediction for the ensemble
 
  Args:
- texts: List texts
- source: Source data
+ texts: List of texts
+ source: Data source
 
  Returns:
- List[SentimentScore]: Results ensemble
+ List[SentimentScore]: Ensemble results
  """
  results = []
 
- # Parallel handling small batches
+ # Process small batches in parallel
  batch_size = 10
  for i in range(0, len(texts), batch_size):
  batch_texts = texts[i:i + batch_size]
 
- # Creating tasks for parallel completion
+ # Create tasks for parallel execution
  tasks = [self.predict(text, source) for text in batch_texts]
  batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
- # Processing exceptions
+ # Handle exceptions
  for result in batch_results:
  if isinstance(result, Exception):
  logger.error("Batch prediction failed for text", error=result)
@@ -376,7 +376,7 @@ class EnsembleSentimentModel:
  return results
 
  def get_stats(self) -> Dict[str, Any]:
- """Getting statistics ensemble"""
+ """Get ensemble statistics"""
  transformer_stats = self.transformer_ensemble.get_stats if self.transformer_ensemble else {}
  vader_stats = self.vader_analyzer.get_stats if self.vader_analyzer else {}
 
@@ -400,10 +400,10 @@ class EnsembleSentimentModel:
 
 async def create_ensemble_model -> EnsembleSentimentModel:
  """
- Factory for creation ensemble model
+ Factory function for creating an ensemble model
 
  Returns:
- EnsembleSentimentModel: initialized ensemble model
+ EnsembleSentimentModel: Initialized ensemble model
  """
  model = EnsembleSentimentModel
  await model.initialize

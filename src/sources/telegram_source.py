@@ -30,7 +30,7 @@ class TelegramRateLimiter:
  self.last_request_time = 0
 
  async def acquire(self):
- """Getting permissions on request"""
+ """Acquire permission for the request"""
  now = time.time
  time_since_last = now - self.last_request_time
 
@@ -55,7 +55,7 @@ class TelegramSentimentSource:
  """
 
  def __init__(self):
- """Initialization Telegram source"""
+ """Initialize the Telegram data source"""
  config = get_config
 
  # Telegram API credentials
@@ -112,7 +112,7 @@ class TelegramSentimentSource:
  self.seen_messages = set
 
  async def initialize(self):
- """Initialization Telegram client"""
+ """Initialize the Telegram client"""
  if not all([self.api_id, self.api_hash]):
  raise ValueError("Telegram API ID and Hash are required")
 
@@ -145,13 +145,13 @@ class TelegramSentimentSource:
 
  def _extract_crypto_mentions(self, text: str) -> Set[str]:
  """
- Extraction mentions cryptocurrencies from text
+ Extract cryptocurrency mentions from text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- Set[str]: Found symbols cryptocurrencies
+ Set[str]: Found cryptocurrency symbols
  """
  mentioned_symbols = set
  text_upper = text.upper
@@ -176,22 +176,22 @@ class TelegramSentimentSource:
 
  def _is_crypto_relevant(self, text: str) -> bool:
  """
- Check relevance messages for crypto analysis
+ Check message relevance for crypto analysis
 
  Args:
- text: Text for checks
+ text: Text to check
 
  Returns:
  bool: True if message relevant
  """
  text_lower = text.lower
 
- # Check keywords words
+ # Check for keywords
  for keyword in self.crypto_keywords:
  if keyword in text_lower:
  return True
 
- # Check symbols cryptocurrencies
+ # Check for cryptocurrency symbols
  if self._extract_crypto_mentions(text):
  return True
 
@@ -211,7 +211,7 @@ class TelegramSentimentSource:
 
  async def _get_channel_info(self, channel_username: str) -> Optional[Dict[str, Any]]:
  """
- Getting information about channel
+ Get information about the channel
 
  Args:
  channel_username: Username channel
@@ -246,15 +246,15 @@ class TelegramSentimentSource:
  hours_back: int = 24
  ) -> List[Dict[str, Any]]:
  """
- Getting message from channel
+ Get messages from a channel
 
  Args:
  channel_username: Username channel
- limit: Maximum number of message
- hours_back: Period in hours
+ limit: Maximum number of messages
+ hours_back: Time period in hours
 
  Returns:
- List[Dict[str, Any]]: List processed message
+ List[Dict[str, Any]]: List of processed messages
  """
  if not self.client:
  await self.initialize
@@ -265,7 +265,7 @@ class TelegramSentimentSource:
 
  await self.rate_limiter.acquire
 
- # Getting message
+ # Get messages
  async for message in self.client.iter_messages(
  channel_username,
  limit=limit,
@@ -275,7 +275,7 @@ class TelegramSentimentSource:
  if processed_message and self._is_crypto_relevant(processed_message["text"]):
  messages.append(processed_message)
 
- # Check on duplicates
+ # Check for duplicates
  message_id = f"{channel_username}_{message.id}"
  if message_id in self.seen_messages:
  continue
@@ -305,7 +305,7 @@ class TelegramSentimentSource:
 
  async def _process_message(self, message, channel_username: str) -> Optional[Dict[str, Any]]:
  """
- Processing a single messages
+ Process a single message
 
  Args:
  message: Object messages from Telegram API
@@ -315,7 +315,7 @@ class TelegramSentimentSource:
  Optional[Dict[str, Any]]: Processed message or None
  """
  try:
- # Check presence text
+ # Check for text content
  if not message.text:
  return None
 
@@ -323,16 +323,16 @@ class TelegramSentimentSource:
  if len(text) < 5:
  return None
 
- # Cleanup text
+ # Clean up text
  cleaned_text = sanitize_text(text)
  if not cleaned_text:
  return None
 
- # Validation content
+ # Validate content
  if not validate_text_content(cleaned_text, "telegram"):
  return None
 
- # Extraction information about author
+ # Extract author information
  sender = message.sender
  author_info = {
  "id": sender.id if sender else None,
@@ -341,7 +341,7 @@ class TelegramSentimentSource:
  "is_bot": getattr(sender, 'bot', False)
  }
 
- # Metrics interactions
+ # Record metrics interactions
  views = getattr(message, 'views', 0)
  forwards = getattr(message, 'forwards', 0)
  replies = getattr(message, 'replies', None)
@@ -364,7 +364,7 @@ class TelegramSentimentSource:
  "engagement_score": views * 0.1 + forwards * 2 + reply_count * 1.5
  },
  "metadata": {
- "language": "en", # In main English content
+ "language": "en", # Primarily English content
  "platform": "telegram",
  "content_type": "message",
  "has_media": bool(message.media),
@@ -385,14 +385,14 @@ class TelegramSentimentSource:
  hours_back: int = 24
  ) -> List[Dict[str, Any]]:
  """
- Getting message from all tracked channels
+ Get messages from all monitored channels
 
  Args:
- limit_per_channel: Limit message on channel
- hours_back: Period in hours
+ limit_per_channel: Message limit per channel
+ hours_back: Time period in hours
 
  Returns:
- List[Dict[str, Any]]: List all message
+ List[Dict[str, Any]]: List of all messages
  """
  all_messages = []
 
@@ -428,11 +428,11 @@ class TelegramSentimentSource:
  callback=None
  ):
  """
- Start monitoring in actually time
+ Start real-time monitoring
 
  Args:
  channels: List channels for monitoring
- callback: Function for handling new message
+ callback: Function for handling new messages
  """
  if not self.client:
  await self.initialize
@@ -440,7 +440,7 @@ class TelegramSentimentSource:
  if not channels:
  channels = self.crypto_channels
 
- # Getting entity for channels
+ # Get entity for channels
  channel_entities = []
  for channel in channels:
  try:
@@ -494,11 +494,11 @@ class TelegramSentimentSource:
  limit: int = 100
  ) -> List[Dict[str, Any]]:
  """
- Search message by key word
+ Search messages by keyword
 
  Args:
- query: Search request
- channels: Channels for search
+ query: Search query
+ channels: Channels to search
  limit: Maximum number of results
 
  Returns:
@@ -538,7 +538,7 @@ class TelegramSentimentSource:
  logger.error(f"Error searching in Telegram channel {channel}", error=e)
  continue
 
- # Sorting by time
+ # Sort by time
  all_results.sort(
  key=lambda m: m.get('created_at', ''),
  reverse=True
@@ -555,10 +555,10 @@ class TelegramSentimentSource:
 
  def get_stats(self) -> Dict[str, Any]:
  """
- Getting statistics source
+ Get source statistics
 
  Returns:
- Dict[str, Any]: Statistics work
+ Dict[str, Any]: Operational statistics
  """
  return {
  "source": "telegram",
@@ -577,10 +577,10 @@ class TelegramSentimentSource:
 
 async def create_telegram_source -> TelegramSentimentSource:
  """
- Factory function for creation Telegram source
+ Factory function for creating a Telegram data source
 
  Returns:
- TelegramSentimentSource: Configured source data
+ TelegramSentimentSource: Configured data source
  """
  source = TelegramSentimentSource
  await source.initialize

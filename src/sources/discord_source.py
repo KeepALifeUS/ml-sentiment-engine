@@ -31,15 +31,15 @@ class DiscordRateLimiter:
  self.last_refill = time.time
 
  async def acquire(self):
- """Getting permissions on request (token bucket)"""
+ """Acquire permission for the request (token bucket)"""
  now = time.time
 
- # Replenishment bucket
+ # Refill bucket
  tokens_to_add = (now - self.last_refill) * self.requests_per_second
  self.bucket_tokens = min(self.requests_per_second, self.bucket_tokens + tokens_to_add)
  self.last_refill = now
 
- # Check availability tokens
+ # Check token availability
  if self.bucket_tokens < 1:
  sleep_time = (1 - self.bucket_tokens) / self.requests_per_second
  await asyncio.sleep(sleep_time)
@@ -60,10 +60,10 @@ class CryptoDiscordBot(discord.Client):
  self.message_callback = None
 
  async def on_ready(self):
- """Called when bot ready"""
+ """Called when the bot is ready"""
  logger.info(f"Discord bot logged in as {self.user}")
 
- # Getting list available servers and channels
+ # Get list of available servers and channels
  for guild in self.guilds:
  logger.info(f"Connected to guild: {guild.name} (id: {guild.id})")
 
@@ -73,16 +73,16 @@ class CryptoDiscordBot(discord.Client):
  logger.debug(f"Monitoring channel: #{channel.name} in {guild.name}")
 
  async def on_message(self, message):
- """Processing new message"""
- # Ignoring messages from bots
+ """Process a new message"""
+ # Ignore messages from bots
  if message.author.bot:
  return
 
- # Check that channel tracked
+ # Check that the channel is tracked
  if message.channel.id not in self.monitored_channels:
  return
 
- # Processing messages
+ # Process messages
  try:
  processed_message = await self.sentiment_source._process_message(message)
  if processed_message and self.sentiment_source._is_crypto_relevant(processed_message["text"]):
@@ -98,7 +98,7 @@ class CryptoDiscordBot(discord.Client):
  logger.error("Error processing Discord message", error=e)
 
  def _is_crypto_channel(self, channel_name: str) -> bool:
- """Check is whether channel crypto-theoretically"""
+ """Check whether the channel is crypto-related"""
  crypto_channel_keywords = [
  "crypto", "bitcoin", "btc", "ethereum", "eth", "trading", "signals",
  "market", "analysis", "price", "discussion", "general", "defi",
@@ -109,7 +109,7 @@ class CryptoDiscordBot(discord.Client):
  return any(keyword in channel_lower for keyword in crypto_channel_keywords)
 
  def set_message_callback(self, callback):
- """Setting callback for handling new message"""
+ """Set callback for handling new messages"""
  self.message_callback = callback
 
 
@@ -127,7 +127,7 @@ class DiscordSentimentSource:
  """
 
  def __init__(self):
- """Initialization Discord source"""
+ """Initialize the Discord data source"""
  config = get_config
 
  # Discord Bot Token
@@ -169,11 +169,11 @@ class DiscordSentimentSource:
  self.seen_messages = set
 
  async def initialize(self):
- """Initialization Discord bot"""
+ """Initialize the Discord bot"""
  if not self.bot_token:
  raise ValueError("Discord Bot Token is required")
 
- # Creating bot with necessary intents
+ # Create the bot with necessary intents
  intents = discord.Intents.default
  intents.message_content = True
  intents.guilds = True
@@ -186,8 +186,8 @@ class DiscordSentimentSource:
  # Start bot in background task
  self.bot_task = asyncio.create_task(self.bot.start(self.bot_token))
 
- # Waiting readiness bot
- await asyncio.sleep(3) # Even time on connection
+ # Wait for bot readiness
+ await asyncio.sleep(3) # Allow time for connection
 
  if self.bot.is_ready:
  logger.info("Discord bot initialized successfully")
@@ -212,13 +212,13 @@ class DiscordSentimentSource:
 
  def _extract_crypto_mentions(self, text: str) -> Set[str]:
  """
- Extraction mentions cryptocurrencies from text
+ Extract cryptocurrency mentions from text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- Set[str]: Found symbols cryptocurrencies
+ Set[str]: Found cryptocurrency symbols
  """
  mentioned_symbols = set
  text_upper = text.upper
@@ -242,22 +242,22 @@ class DiscordSentimentSource:
 
  def _is_crypto_relevant(self, text: str) -> bool:
  """
- Check relevance messages for crypto analysis
+ Check message relevance for crypto analysis
 
  Args:
- text: Text for checks
+ text: Text to check
 
  Returns:
  bool: True if message relevant
  """
  text_lower = text.lower
 
- # Check keywords words
+ # Check for keywords
  for keyword in self.crypto_keywords:
  if keyword in text_lower:
  return True
 
- # Check symbols cryptocurrencies
+ # Check for cryptocurrency symbols
  if self._extract_crypto_mentions(text):
  return True
 
@@ -278,16 +278,16 @@ class DiscordSentimentSource:
 
  async def _process_message(self, message) -> Optional[Dict[str, Any]]:
  """
- Processing Discord messages
+ Process a Discord message
 
  Args:
- message: Object messages Discord
+ message: Discord message object
 
  Returns:
  Optional[Dict[str, Any]]: Processed message or None
  """
  try:
- # Check presence text
+ # Check for text content
  if not message.content:
  return None
 
@@ -295,7 +295,7 @@ class DiscordSentimentSource:
  if len(text) < 5:
  return None
 
- # Cleanup text from Discord-specific elements
+ # Clean up text from Discord-specific elements
  # Remove mentions (@user, @everyone, @here)
  text = re.sub(r'<@!?\d+>', '', text)
  text = re.sub(r'@everyone|@here', '', text)
@@ -310,18 +310,18 @@ class DiscordSentimentSource:
  if not cleaned_text:
  return None
 
- # Validation content
+ # Validate content
  if not validate_text_content(cleaned_text, "discord"):
  return None
 
- # Check on duplicates
+ # Check for duplicates
  message_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
  if message_id in self.seen_messages:
  return None
 
  self.seen_messages.add(message_id)
 
- # Information about author
+ # Author information
  author = message.author
  author_info = {
  "id": str(author.id),
@@ -332,11 +332,11 @@ class DiscordSentimentSource:
  "avatar_url": str(author.avatar.url) if author.avatar else None
  }
 
- # Information about server and channel
+ # Server and channel information
  guild = message.guild
  channel = message.channel
 
- # Metrics reactions
+ # Record metrics reactions
  reactions_count = sum(reaction.count for reaction in message.reactions) if message.reactions else 0
 
  # Mentions and links
@@ -364,7 +364,7 @@ class DiscordSentimentSource:
  "engagement_score": reactions_count * 2 + mentions_count * 0.5
  },
  "metadata": {
- "language": "en", # In main English
+ "language": "en", # Primarily English
  "platform": "discord",
  "content_type": "message",
  "has_attachments": bool(message.attachments),
@@ -387,15 +387,15 @@ class DiscordSentimentSource:
  hours_back: int = 24
  ) -> List[Dict[str, Any]]:
  """
- Getting history message from channel
+ Get message history from a channel
 
  Args:
- channel_id: ID Discord channel
- limit: Maximum number of message
- hours_back: Period in hours
+ channel_id: Discord channel ID
+ limit: Maximum number of messages
+ hours_back: Time period in hours
 
  Returns:
- List[Dict[str, Any]]: List processed message
+ List[Dict[str, Any]]: List of processed messages
  """
  if not self.bot or not self.bot.is_ready:
  await self.initialize
@@ -442,21 +442,21 @@ class DiscordSentimentSource:
  hours_back: int = 24
  ) -> List[Dict[str, Any]]:
  """
- Getting message from all tracked channels
+ Get messages from all monitored channels
 
  Args:
- limit_per_channel: Limit message on channel
- hours_back: Period in hours
+ limit_per_channel: Message limit per channel
+ hours_back: Time period in hours
 
  Returns:
- List[Dict[str, Any]]: List all message
+ List[Dict[str, Any]]: List of all messages
  """
  if not self.bot or not self.bot.is_ready:
  await self.initialize
 
  all_messages = []
 
- # Processing all monitored channels
+ # Process all monitored channels
  for channel_id in self.bot.monitored_channels:
  try:
  messages = await self.fetch_channel_history(
@@ -489,14 +489,14 @@ class DiscordSentimentSource:
  limit: int = 100
  ) -> List[Dict[str, Any]]:
  """
- Search message in channels
+ Search for messages in channels
 
  Note: Discord API not supports search by content.
  This method receives recent messages and filters their.
 
  Args:
- query: Search request
- channel_ids: Channels for search
+ query: Search query
+ channel_ids: Channels to search
  limit: Maximum number of results
 
  Returns:
@@ -505,21 +505,21 @@ class DiscordSentimentSource:
  if not channel_ids:
  if not self.bot or not self.bot.is_ready:
  await self.initialize
- channel_ids = list(self.bot.monitored_channels)[:5] # Limits search
+ channel_ids = list(self.bot.monitored_channels)[:5] # Limit the search scope
 
  all_results = []
  query_lower = query.lower
 
  for channel_id in channel_ids:
  try:
- # Get more message for search
+ # Get more messages for search
  messages = await self.fetch_channel_history(
  channel_id,
- limit=200, # Large limit for search
+ limit=200, # Larger limit for search
  hours_back=168 # Week
  )
 
- # Filtering by request
+ # Filter by query
  matching_messages = [
  msg for msg in messages
  if query_lower in msg.get('text', '').lower
@@ -531,7 +531,7 @@ class DiscordSentimentSource:
  logger.error(f"Error searching in Discord channel {channel_id}", error=e)
  continue
 
- # Sorting by time
+ # Sort by time
  all_results.sort(
  key=lambda m: m.get('created_at', ''),
  reverse=True
@@ -550,15 +550,15 @@ class DiscordSentimentSource:
 
  async def start_real_time_monitoring(self, callback=None):
  """
- Start monitoring in actually time
+ Start real-time monitoring
 
  Args:
- callback: Function for handling new message
+ callback: Function for handling new messages
  """
  if not self.bot:
  await self.initialize
 
- # Setting callback for new message
+ # Set callback for new messages
  self.bot.set_message_callback(callback)
 
  logger.info(
@@ -567,7 +567,7 @@ class DiscordSentimentSource:
  servers_connected=self.servers_connected
  )
 
- # Bot already launched in initialize, simply wait
+ # Bot already started in initialize, just wait
  try:
  await self.bot.wait_until_ready
  while not self.bot.is_closed:
@@ -578,10 +578,10 @@ class DiscordSentimentSource:
 
  def get_stats(self) -> Dict[str, Any]:
  """
- Getting statistics source
+ Get source statistics
 
  Returns:
- Dict[str, Any]: Statistics work
+ Dict[str, Any]: Operational statistics
  """
  bot_ready = self.bot.is_ready if self.bot else False
 
@@ -602,10 +602,10 @@ class DiscordSentimentSource:
 
 async def create_discord_source -> DiscordSentimentSource:
  """
- Factory function for creation Discord source
+ Factory function for creating a Discord data source
 
  Returns:
- DiscordSentimentSource: Configured source data
+ DiscordSentimentSource: Configured data source
  """
  source = DiscordSentimentSource
  await source.initialize

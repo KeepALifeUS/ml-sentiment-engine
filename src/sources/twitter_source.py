@@ -32,7 +32,7 @@ class TwitterCircuitBreaker:
  self.state = "closed" # closed, open, half-open
 
  def can_execute(self) -> bool:
- """Check capabilities completion request"""
+ """Check if the request can be executed"""
  if self.state == "closed":
  return True
  elif self.state == "open":
@@ -44,7 +44,7 @@ class TwitterCircuitBreaker:
  return True
 
  def record_success(self):
- """Registration successful request"""
+ """Record a successful request"""
  self.failure_count = 0
  self.state = "closed"
 
@@ -71,7 +71,7 @@ class TwitterRateLimiter:
  self.requests = []
 
  async def acquire(self):
- """Getting permissions on request"""
+ """Acquire permission for the request"""
  now = time.time
 
  # Remove old requests
@@ -107,7 +107,7 @@ class TwitterSentimentSource:
  """
 
  def __init__(self):
- """Initialization Twitter source"""
+ """Initialize the Twitter data source"""
  config = get_config
 
  # Twitter API credentials
@@ -134,7 +134,7 @@ class TwitterSentimentSource:
  self.last_error = None
 
  async def initialize(self):
- """Initialization Twitter API client"""
+ """Initialize the Twitter API client"""
  if not self.bearer_token:
  raise ValueError("Twitter Bearer Token is required")
 
@@ -157,13 +157,13 @@ class TwitterSentimentSource:
 
  def _extract_crypto_mentions(self, text: str) -> Set[str]:
  """
- Extraction mentions cryptocurrencies from text
+ Extract cryptocurrency mentions from text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- Set[str]: Found symbols cryptocurrencies
+ Set[str]: Found cryptocurrency symbols
  """
  mentioned_symbols = set
  text_upper = text.upper
@@ -185,22 +185,22 @@ class TwitterSentimentSource:
 
  def _is_crypto_relevant(self, text: str) -> bool:
  """
- Check relevance text for crypto analysis
+ Check text relevance for crypto analysis
 
  Args:
- text: Text for checks
+ text: Text to check
 
  Returns:
  bool: True if text relevant
  """
  text_lower = text.lower
 
- # Check keywords words
+ # Check for keywords
  for keyword in self.crypto_keywords:
  if keyword in text_lower:
  return True
 
- # Check symbols cryptocurrencies
+ # Check for cryptocurrency symbols
  if self._extract_crypto_mentions(text):
  return True
 
@@ -214,7 +214,7 @@ class TwitterSentimentSource:
  api_call: Function for call API
 
  Returns:
- Any: Result API call
+ Any: API call result
  """
  if not self.circuit_breaker.can_execute:
  raise Exception("Twitter circuit breaker is open")
@@ -260,7 +260,7 @@ class TwitterSentimentSource:
  Args:
  symbols: List symbols for search
  limit: Maximum number of tweets
- hours_back: Period search in hours
+ hours_back: Search period in hours
 
  Returns:
  List[Dict[str, Any]]: List processed tweets
@@ -305,7 +305,7 @@ class TwitterSentimentSource:
  if not response.data:
  continue
 
- # Processing received tweets
+ # Process received tweets
  for tweet in response.data:
  processed_tweet = await self._process_tweet(tweet, symbol)
  if processed_tweet and self._is_crypto_relevant(processed_tweet["text"]):
@@ -338,7 +338,7 @@ class TwitterSentimentSource:
 
  async def _process_tweet(self, tweet, symbol: str) -> Optional[Dict[str, Any]]:
  """
- Processing a single tweet
+ Process a single tweet
 
  Args:
  tweet: Object tweet from Twitter API
@@ -348,21 +348,21 @@ class TwitterSentimentSource:
  Optional[Dict[str, Any]]: Processed tweet or None
  """
  try:
- # Extraction base information
+ # Extract basic information
  text = tweet.text
  if not text:
  return None
 
- # Cleanup text
+ # Clean up text
  cleaned_text = sanitize_text(text)
  if not cleaned_text or len(cleaned_text) < 10:
  return None
 
- # Validation content
+ # Validate content
  if not validate_text_content(cleaned_text, "twitter"):
  return None
 
- # Extraction metrics
+ # Extract metrics
  metrics = tweet.public_metrics or {}
 
  # Determining influence
@@ -410,7 +410,7 @@ class TwitterSentimentSource:
  callback=None
  ):
  """
- Streaming getting tweets in actually time
+ Stream tweets in real time
 
  Args:
  symbols: Symbols for monitoring
@@ -455,10 +455,10 @@ class TwitterSentimentSource:
 
  def get_stats(self) -> Dict[str, Any]:
  """
- Getting statistics source
+ Get source statistics
 
  Returns:
- Dict[str, Any]: Statistics work
+ Dict[str, Any]: Operational statistics
  """
  return {
  "source": "twitter",
@@ -475,10 +475,10 @@ class TwitterSentimentSource:
 
 async def create_twitter_source -> TwitterSentimentSource:
  """
- Factory function for creation Twitter source
+ Factory function for creating a Twitter data source
 
  Returns:
- TwitterSentimentSource: Configured source data
+ TwitterSentimentSource: Configured data source
  """
  source = TwitterSentimentSource
  await source.initialize

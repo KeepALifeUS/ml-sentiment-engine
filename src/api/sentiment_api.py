@@ -37,9 +37,9 @@ PREDICTION_COUNT = Counter('sentiment_predictions_total', 'Total predictions', [
 
 # Pydantic models for API
 class SentimentRequest(BaseModel):
- """Request on analysis sentiment"""
- text: str = Field(..., min_length=1, max_length=10000, description="Text for analysis")
- source: str = Field(default="api", description="Source data")
+ """Sentiment analysis request"""
+ text: str = Field(..., min_length=1, max_length=10000, description="Text to analyze")
+ source: str = Field(default="api", description="Data source")
  model: str = Field(default="ensemble", description="Model for analysis")
 
  @validator("text")
@@ -51,8 +51,8 @@ class SentimentRequest(BaseModel):
 
 class BatchSentimentRequest(BaseModel):
  """Batch request on analysis sentiment"""
- texts: List[str] = Field(..., max_items=100, description="List texts")
- source: str = Field(default="api", description="Source data")
+ texts: List[str] = Field(..., max_items=100, description="List of texts")
+ source: str = Field(default="api", description="Data source")
  model: str = Field(default="ensemble", description="Model for analysis")
 
  @validator("texts")
@@ -74,10 +74,10 @@ class SentimentResponse(BaseModel):
 
 class DataSourceRequest(BaseModel):
  """Request data from source"""
- source: str = Field(..., description="Source data")
+ source: str = Field(..., description="Data source")
  symbol: Optional[str] = Field(None, description="Cryptocurrency symbol")
- limit: int = Field(default=100, ge=1, le=1000, description="Limit results")
- hours_back: int = Field(default=24, ge=1, le=168, description="Period in hours")
+ limit: int = Field(default=100, ge=1, le=1000, description="Result limit")
+ hours_back: int = Field(default=24, ge=1, le=168, description="Time period in hours")
 
 
 class HealthResponse(BaseModel):
@@ -96,7 +96,7 @@ class SentimentAPI:
  """
 
  def __init__(self):
- """Initialization API"""
+ """Initialize the API"""
  self.config = get_config
  self.app = FastAPI(
  title="ML-Framework Sentiment Analysis API",
@@ -113,7 +113,7 @@ class SentimentAPI:
  # Redis for rate limiting
  self.redis: Optional[aioredis.Redis] = None
 
- # Metrics
+ # Record metrics
  self.start_time = time.time
 
  # Setup API
@@ -121,17 +121,17 @@ class SentimentAPI:
  self._setup_routes
 
  async def initialize(self):
- """Initialization API components"""
+ """Initialize the API components"""
  try:
- # Initialization ensemble model
+ # Initialize the ensemble model
  logger.info("Initializing ensemble sentiment model...")
  self.ensemble_model = await create_ensemble_model
 
- # Initialization data sources
+ # Initialize data sources
  logger.info("Initializing data sources...")
  await self._initialize_data_sources
 
- # Initialization Redis
+ # Initialize Redis
  if self.config.redis.host:
  try:
  self.redis = aioredis.from_url(
@@ -151,7 +151,7 @@ class SentimentAPI:
  raise
 
  async def _initialize_data_sources(self):
- """Initialization sources data"""
+ """Initialize data sources"""
  try:
  # Twitter source
  if self.config.social.twitter_bearer_token:
@@ -195,7 +195,7 @@ class SentimentAPI:
  try:
  response = await call_next(request)
 
- # Metrics
+ # Record metrics
  duration = time.time - start_time
  REQUEST_DURATION.observe(duration)
  REQUEST_COUNT.labels(
@@ -279,7 +279,7 @@ class SentimentAPI:
 
  processing_time = (time.time - start_time) * 1000
 
- # Metrics
+ # Record metrics
  PREDICTION_COUNT.labels(
  model=request.model,
  source=request.source
@@ -327,7 +327,7 @@ class SentimentAPI:
 
  processing_time = (time.time - start_time) * 1000
 
- # Metrics
+ # Record metrics
  PREDICTION_COUNT.labels(
  model=request.model,
  source=request.source
@@ -366,7 +366,7 @@ class SentimentAPI:
  limit: int = 100,
  hours_back: int = 24
  ):
- """Getting data from source"""
+ """Get data from a source"""
  if source not in self.data_sources:
  raise HTTPException(status_code=404, detail=f"Data source '{source}' not found")
 
@@ -407,7 +407,7 @@ class SentimentAPI:
 
  @self.app.get("/stats")
  async def get_api_stats:
- """Getting statistics API"""
+ """Get API statistics"""
  try:
  model_stats = self.ensemble_model.get_stats if self.ensemble_model else {}
  source_stats = {

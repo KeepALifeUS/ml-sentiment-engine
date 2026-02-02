@@ -31,7 +31,7 @@ class RedditRateLimiter:
  self.last_request_time = 0
 
  async def acquire(self):
- """Getting permissions on request"""
+ """Acquire permission for the request"""
  now = time.time
 
  # Minimum interval between requests
@@ -72,7 +72,7 @@ class RedditSentimentSource:
  """
 
  def __init__(self):
- """Initialization Reddit source"""
+ """Initialize the Reddit data source"""
  config = get_config
 
  # Reddit API credentials
@@ -111,7 +111,7 @@ class RedditSentimentSource:
  "ethtrader",
  "satoshistreetbets",
  "cryptocurrencies",
- "investing" # Total input-sub with crypto-content
+ "investing" # General investing sub with crypto content
  ]
 
  # Performance metrics
@@ -121,7 +121,7 @@ class RedditSentimentSource:
  self.last_error = None
 
  async def initialize(self):
- """Initialization Reddit API client"""
+ """Initialize the Reddit API client"""
  if not all([self.client_id, self.client_secret]):
  raise ValueError("Reddit Client ID and Secret are required")
 
@@ -147,20 +147,20 @@ class RedditSentimentSource:
 
  async def _make_reddit_call(self, reddit_call):
  """
- Execution Reddit API call with rate limiting
+ Execute a Reddit API call with rate limiting
 
  Args:
- reddit_call: Function for call Reddit API
+ reddit_call: Function for calling the Reddit API
 
  Returns:
- Any: Result API call
+ Any: API call result
  """
  await self.rate_limiter.acquire
 
  try:
  start_time = time.time
 
- # Execution in executor for blocking calls PRAW
+ # Execute in an executor for blocking PRAW calls
  loop = asyncio.get_event_loop
  result = await loop.run_in_executor(None, reddit_call)
 
@@ -182,13 +182,13 @@ class RedditSentimentSource:
 
  def _extract_crypto_mentions(self, text: str) -> Set[str]:
  """
- Extraction mentions cryptocurrencies from text
+ Extract cryptocurrency mentions from text
 
  Args:
- text: Text for analysis
+ text: Text to analyze
 
  Returns:
- Set[str]: Found symbols cryptocurrencies
+ Set[str]: Found cryptocurrency symbols
  """
  mentioned_symbols = set
  text_upper = text.upper
@@ -212,22 +212,22 @@ class RedditSentimentSource:
 
  def _is_crypto_relevant(self, text: str) -> bool:
  """
- Check relevance text for crypto analysis
+ Check text relevance for crypto analysis
 
  Args:
- text: Text for checks
+ text: Text to check
 
  Returns:
  bool: True if text relevant
  """
  text_lower = text.lower
 
- # Check keywords words
+ # Check for keywords
  for keyword in self.crypto_keywords:
  if keyword in text_lower:
  return True
 
- # Check symbols cryptocurrencies
+ # Check for cryptocurrency symbols
  if self._extract_crypto_mentions(text):
  return True
 
@@ -252,16 +252,16 @@ class RedditSentimentSource:
  time_filter: str = "day" # hour, day, week, month, year, all
  ) -> List[Dict[str, Any]]:
  """
- Getting posts from specific subreddit
+ Get posts from a specific subreddit
 
  Args:
- subreddit_name: Name subreddit
+ subreddit_name: Subreddit name
  limit: Maximum number of posts
- sort_type: Type sorting
- time_filter: Temporarily filter for top posts
+ sort_type: Sort type
+ time_filter: Time filter for top posts
 
  Returns:
- List[Dict[str, Any]]: List processed posts
+ List[Dict[str, Any]]: List of processed posts
  """
  try:
  posts = []
@@ -307,14 +307,14 @@ class RedditSentimentSource:
  limit: int = 50
  ) -> List[Dict[str, Any]]:
  """
- Getting comments to post
+ Get comments for a post
 
  Args:
- post_id: ID post Reddit
+ post_id: Reddit post ID
  limit: Maximum number of comments
 
  Returns:
- List[Dict[str, Any]]: List processed comments
+ List[Dict[str, Any]]: List of processed comments
  """
  try:
  comments = []
@@ -348,17 +348,17 @@ class RedditSentimentSource:
 
  async def _process_post(self, post, subreddit_name: str) -> Optional[Dict[str, Any]]:
  """
- Processing post Reddit
+ Process a Reddit post
 
  Args:
- post: Object post from Reddit API
- subreddit_name: Name subreddit
+ post: Post object from the Reddit API
+ subreddit_name: Subreddit name
 
  Returns:
  Optional[Dict[str, Any]]: Processed post or None
  """
  try:
- # Creating text from header and content
+ # Create text from title and content
  title = post.title or ""
  selftext = post.selftext or ""
  full_text = f"{title}. {selftext}".strip
@@ -366,16 +366,16 @@ class RedditSentimentSource:
  if not full_text or len(full_text) < 10:
  return None
 
- # Cleanup text
+ # Clean up text
  cleaned_text = sanitize_text(full_text)
  if not cleaned_text:
  return None
 
- # Validation content
+ # Validate content
  if not validate_text_content(cleaned_text, "reddit"):
  return None
 
- # Determining flair
+ # Determine the flair
  flair = post.link_flair_text or ""
 
  processed_post = {
@@ -397,7 +397,7 @@ class RedditSentimentSource:
  "awards": post.total_awards_received
  },
  "metadata": {
- "language": "en", # Reddit in main English
+ "language": "en", # Reddit is primarily English
  "platform": "reddit",
  "content_type": "post",
  "flair": flair,
@@ -416,14 +416,14 @@ class RedditSentimentSource:
 
  async def _process_comment(self, comment, post_id: str) -> Optional[Dict[str, Any]]:
  """
- Processing comment Reddit
+ Process a Reddit comment
 
  Args:
- comment: Object comment from Reddit API
- post_id: ID parent post
+ comment: Comment object from the Reddit API
+ post_id: Parent post ID
 
  Returns:
- Optional[Dict[str, Any]]: Processed comments or None
+ Optional[Dict[str, Any]]: Processed comment or None
  """
  try:
  text = comment.body or ""
@@ -431,12 +431,12 @@ class RedditSentimentSource:
  if not text or len(text) < 5 or text == "[deleted]" or text == "[removed]":
  return None
 
- # Cleanup text
+ # Clean up text
  cleaned_text = sanitize_text(text)
  if not cleaned_text:
  return None
 
- # Validation content
+ # Validate content
  if not validate_text_content(cleaned_text, "reddit"):
  return None
 
@@ -477,21 +477,21 @@ class RedditSentimentSource:
  max_comments_per_post: int = 20
  ) -> List[Dict[str, Any]]:
  """
- Getting all crypto-content from tracked subreddit
+ Get all crypto content from tracked subreddits
 
  Args:
- limit_per_subreddit: Limit posts on subreddit
- include_comments: Include whether comments
- max_comments_per_post: Maximum comments on post
+ limit_per_subreddit: Post limit per subreddit
+ include_comments: Whether to include comments
+ max_comments_per_post: Maximum comments per post
 
  Returns:
- List[Dict[str, Any]]: List all content
+ List[Dict[str, Any]]: List of all content
  """
  all_content = []
 
  for subreddit in self.crypto_subreddits:
  try:
- # Getting posts
+ # Get posts
  posts = await self.fetch_subreddit_posts(
  subreddit,
  limit=limit_per_subreddit,
@@ -499,7 +499,7 @@ class RedditSentimentSource:
  )
  all_content.extend(posts)
 
- # Getting comments for top posts
+ # Get comments for top posts
  if include_comments:
  top_posts = sorted(posts, key=lambda p: p["metrics"]["score"], reverse=True)[:10]
 
@@ -510,7 +510,7 @@ class RedditSentimentSource:
  )
  all_content.extend(comments)
 
- # Pause between subreddit
+ # Pause between subreddits
  await asyncio.sleep(1)
 
  except Exception as e:
@@ -536,17 +536,17 @@ class RedditSentimentSource:
  time_filter: str = "day"
  ) -> List[Dict[str, Any]]:
  """
- Search by Reddit
+ Search Reddit
 
  Args:
- query: Search request
- subreddit: Subreddit for search ("all" for all)
- limit: Limit results
- sort: Sorting results
- time_filter: Temporarily filter
+ query: Search query
+ subreddit: Subreddit to search ("all" for all)
+ limit: Result limit
+ sort: Sort results
+ time_filter: Time filter
 
  Returns:
- List[Dict[str, Any]]: Results search
+ List[Dict[str, Any]]: Search results
  """
  try:
  results = []
@@ -582,10 +582,10 @@ class RedditSentimentSource:
 
  def get_stats(self) -> Dict[str, Any]:
  """
- Getting statistics source
+ Get source statistics
 
  Returns:
- Dict[str, Any]: Statistics work
+ Dict[str, Any]: Operational statistics
  """
  return {
  "source": "reddit",
@@ -603,10 +603,10 @@ class RedditSentimentSource:
 
 async def create_reddit_source -> RedditSentimentSource:
  """
- Factory function for creation Reddit source
+ Factory function for creating a Reddit data source
 
  Returns:
- RedditSentimentSource: Configured source data
+ RedditSentimentSource: Configured data source
  """
  source = RedditSentimentSource
  await source.initialize

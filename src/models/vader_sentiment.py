@@ -18,7 +18,7 @@ class VADERSentimentAnalyzer:
  """VADER-based sentiment analyzer for social media content"""
 
  def __init__(self):
- """Initialize VADER analyzer"""
+ """Initialize the VADER analyzer"""
  self.analyzer = SentimentIntensityAnalyzer
  self.predictions_made = 0
  self.total_inference_time = 0.0
@@ -31,13 +31,13 @@ class VADERSentimentAnalyzer:
  'whale': 0.5, 'dip': -0.5, 'ath': 2.0, 'rekt': -2.5
  }
 
- # Updating lexicon VADER
+ # Update the VADER lexicon
  self.analyzer.lexicon.update(crypto_booster_dict)
 
  logger.info("VADER sentiment analyzer initialized with crypto lexicon")
 
  async def predict(self, text: str) -> SentimentScore:
- """Prediction sentiment with VADER"""
+ """Predict sentiment with VADER"""
  try:
  start_time = time.time
 
@@ -53,7 +53,7 @@ class VADERSentimentAnalyzer:
  cleaned_text
  )
 
- # Conversion compound score (-1 to 1)
+ # Convert compound score (-1 to 1)
  compound_score = scores['compound']
 
  # Confidence based on intensity
@@ -81,7 +81,7 @@ class VADERSentimentAnalyzer:
  raise
 
  async def predict_batch(self, texts: List[str]) -> List[SentimentScore]:
- """Batch prediction for VADER"""
+ """Batch prediction with VADER"""
  results = []
 
  for text in texts:
@@ -94,7 +94,7 @@ class VADERSentimentAnalyzer:
  return results
 
  def get_stats(self) -> Dict[str, Any]:
- """Getting statistics VADER"""
+ """Get VADER statistics"""
  return {
  "model_type": "vader",
  "predictions_made": self.predictions_made,
@@ -106,5 +106,5 @@ class VADERSentimentAnalyzer:
 
 
 async def create_vader_analyzer -> VADERSentimentAnalyzer:
- """Factory for creation VADER analyzer"""
+ """Factory function for creating a VADER analyzer"""
  return VADERSentimentAnalyzer
