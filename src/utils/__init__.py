@@ -1,1 +1,1 @@
-"""Utilities package для sentiment engine."""
+"""Utilities package for sentiment engine."""

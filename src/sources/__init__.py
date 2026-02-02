@@ -1,1 +1,1 @@
-"""Data sources package для sentiment engine."""
+"""Data sources package for sentiment engine."""

@@ -1,6 +1,6 @@
 # ML-Framework ML Sentiment Engine
 
-Enterprise-grade sentiment aggregation system for crypto trading with Context7 patterns.
+Enterprise-grade sentiment aggregation system for crypto trading with .
 
 ## 🚀 Features
 
@@ -103,20 +103,20 @@ uvicorn src.api.sentiment_api:app --host 0.0.0.0 --port 8003 --workers 4
 import asyncio
 from src.models.ensemble_sentiment import create_ensemble_model
 
-async def main():
-    # Initialize model
-    model = await create_ensemble_model()
+async def main:
+ # Initialize model
+ model = await create_ensemble_model
 
-    # Analyze sentiment
-    result = await model.predict(
-        "Bitcoin is going to the moon! 🚀 HODL!",
-        source="twitter"
-    )
+ # Analyze sentiment
+ result = await model.predict(
+ "Bitcoin is going to the moon! 🚀 HODL!",
+ source="twitter"
+ )
 
-    print(f"Sentiment: {result.value}")
-    print(f"Confidence: {result.confidence}")
+ print(f"Sentiment: {result.value}")
+ print(f"Confidence: {result.confidence}")
 
-asyncio.run(main())
+asyncio.run(main)
 
 ```
 
@@ -126,22 +126,22 @@ asyncio.run(main())
 from src.sources.twitter_source import create_twitter_source
 from src.sources.reddit_source import create_reddit_source
 
-async def fetch_crypto_sentiment():
-    # Twitter data
-    twitter = await create_twitter_source()
-    tweets = await twitter.search_tweets(
-        symbols=["BTC", "ETH"],
-        limit=100,
-        hours_back=24
-    )
+async def fetch_crypto_sentiment:
+ # Twitter data
+ twitter = await create_twitter_source
+ tweets = await twitter.search_tweets(
+ symbols=["BTC", "ETH"],
+ limit=100,
+ hours_back=24
+ )
 
-    # Reddit data
-    reddit = await create_reddit_source()
-    posts = await reddit.fetch_all_crypto_content(
-        limit_per_subreddit=50
-    )
+ # Reddit data
+ reddit = await create_reddit_source
+ posts = await reddit.fetch_all_crypto_content(
+ limit_per_subreddit=50
+ )
 
-    return tweets, posts
+ return tweets, posts
 
 ```
 
@@ -152,24 +152,24 @@ async def fetch_crypto_sentiment():
 ```bash
 # Single text analysis
 curl -X POST "http://localhost:8003/sentiment" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Ethereum 2.0 upgrade looks promising!",
-    "source": "news",
-    "model": "ensemble"
-  }'
+ -H "Content-Type: application/json" \
+ -d '{
+ "text": "Ethereum 2.0 upgrade looks promising!",
+ "source": "news",
+ "model": "ensemble"
+ }'
 
 # Batch analysis
 curl -X POST "http://localhost:8003/sentiment/batch" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "texts": [
-      "Bitcoin hitting new ATH!",
-      "Market crash incoming?",
-      "DeFi is the future"
-    ],
-    "source": "twitter"
-  }'
+ -H "Content-Type: application/json" \
+ -d '{
+ "texts": [
+ "Bitcoin hitting new ATH!",
+ "Market crash incoming?",
+ "DeFi is the future"
+ ],
+ "source": "twitter"
+ }'
 
 ```
 
@@ -209,8 +209,8 @@ curl "http://localhost:8003/metrics"
 const ws = new WebSocket('ws://localhost:8003/ws/sentiment');
 
 ws.onmessage = function (event) {
-  const data = JSON.parse(event.data);
-  console.log('New sentiment:', data);
+ const data = JSON.parse(event.data);
+ console.log('New sentiment:', data);
 };
 
 ```
@@ -220,7 +220,7 @@ ws.onmessage = function (event) {
 ```python
 from src.streaming.kafka_consumer import SentimentKafkaConsumer
 
-consumer = SentimentKafkaConsumer()
+consumer = SentimentKafkaConsumer
 await consumer.start_consuming("crypto-sentiment")
 
 ```
@@ -260,14 +260,14 @@ pytest tests/test_models.py -v
 from src.models.ensemble_sentiment import EnsembleSentimentModel
 
 # Create custom ensemble
-ensemble = EnsembleSentimentModel()
-await ensemble.initialize()
+ensemble = EnsembleSentimentModel
+await ensemble.initialize
 
 # Custom weights
 result = await ensemble.predict(
-    text="Crypto market analysis",
-    source="news",
-    use_adaptive_weighting=True
+ text="Crypto market analysis",
+ source="news",
+ use_adaptive_weighting=True
 )
 
 ```
@@ -277,13 +277,13 @@ result = await ensemble.predict(
 ```python
 from src.aggregation.weighted_aggregator import WeightedAggregator
 
-aggregator = WeightedAggregator()
+aggregator = WeightedAggregator
 
 # Aggregate sentiment from multiple sources
 combined_sentiment = await aggregator.aggregate_multi_source([
-    {"source": "twitter", "data": twitter_data},
-    {"source": "reddit", "data": reddit_data},
-    {"source": "news", "data": news_data}
+ {"source": "twitter", "data": twitter_data},
+ {"source": "reddit", "data": reddit_data},
+ {"source": "news", "data": news_data}
 ])
 
 ```
@@ -315,7 +315,7 @@ isort src/ tests/
 ### Adding New Models
 
 1. Create model in `src/models/`
-2. Implement `predict()` and `predict_batch()` methods
+2. Implement `predict` and `predict_batch` methods
 3. Add to ensemble configuration
 4. Add performance tests
 
@@ -325,30 +325,30 @@ isort src/ tests/
 
 ML-Framework ML Sentiment Engine
 ├── Data Sources Layer
-│   ├── Twitter/X API
-│   ├── Reddit API
-│   ├── News RSS Feeds
-│   ├── Telegram Client
-│   └── Discord Bot
+│ ├── Twitter/X API
+│ ├── Reddit API
+│ ├── News RSS Feeds
+│ ├── Telegram Client
+│ └── Discord Bot
 ├── Processing Layer
-│   ├── NLP Preprocessing
-│   ├── Sentiment Models
-│   ├── Ensemble Logic
-│   └── Aggregation Algorithms
+│ ├── NLP Preprocessing
+│ ├── Sentiment Models
+│ ├── Ensemble Logic
+│ └── Aggregation Algorithms
 ├── Storage Layer
-│   ├── TimescaleDB (Time-series)
-│   ├── Redis (Caching)
-│   └── Vector Store (Embeddings)
+│ ├── TimescaleDB (Time-series)
+│ ├── Redis (Caching)
+│ └── Vector Store (Embeddings)
 ├── API Layer
-│   ├── REST API (FastAPI)
-│   ├── GraphQL API
-│   ├── WebSocket Streaming
-│   └── Rate Limiting
+│ ├── REST API (FastAPI)
+│ ├── GraphQL API
+│ ├── WebSocket Streaming
+│ └── Rate Limiting
 └── Monitoring Layer
-    ├── Prometheus Metrics
-    ├── OpenTelemetry Tracing
-    ├── Structured Logging
-    └── Health Checks
+ ├── Prometheus Metrics
+ ├── OpenTelemetry Tracing
+ ├── Structured Logging
+ └── Health Checks
 
 ```
 
