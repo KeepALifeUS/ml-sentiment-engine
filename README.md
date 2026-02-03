@@ -1,8 +1,8 @@
 # ML-Framework ML Sentiment Engine
 
-Enterprise-grade sentiment aggregation system for crypto trading with .
+Enterprise-grade sentiment aggregation system for crypto trading.
 
-## 🚀 Features
+## Features
 
 ### Data Sources
 
@@ -34,7 +34,7 @@ Enterprise-grade sentiment aggregation system for crypto trading with .
 - **Caching**: Redis-based performance optimization
 - **Storage**: TimescaleDB for time-series data
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Install package
