@@ -388,3 +388,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **ML-Framework ML Sentiment Engine** - Enterprise-grade sentiment analysis for crypto trading.
+
+## Support
+
+For questions and support, please open an issue on GitHub.
